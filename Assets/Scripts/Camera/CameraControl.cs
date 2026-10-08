@@ -1,8 +1,6 @@
 using UnityEngine;
-using UnityEngine.Rendering;
-using UnityEngine.Scripting.APIUpdating;
 
-public class CameraControl2 : MonoBehaviour
+public class CameraControl : MonoBehaviour
 {
     public float m_DampTime = 0.2f;
     public float m_screenEdgeBuffer = 4f;
