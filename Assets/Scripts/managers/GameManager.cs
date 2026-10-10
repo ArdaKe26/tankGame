@@ -1,7 +1,3 @@
-using System.Collections;
-using System.Diagnostics;
-using System.Drawing;
-using System.Threading.Tasks.Dataflow;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
