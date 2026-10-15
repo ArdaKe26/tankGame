@@ -18,10 +18,10 @@ namespace Tanks.Complete
             Seek,
             Flee
         }
-    
+
         private TankMovement m_Movement;                // Reference to the movement script
         private TankShooting m_Shooting;                // Reference to the shooting script
-        
+
         private float m_PathfindTime = 0.5f;            // Only trigger a pathfind after this time, to not degrade performance
         private float m_PathfindTimer = 0.0f;           // The time until the next pathfind call
 
@@ -37,7 +37,7 @@ namespace Tanks.Complete
 
         private Vector3 m_FleeingLastPosition;          // Used to check how far we moved as we flee. If this doesn't change for a while, need to pick another point
         private float m_SinceLastFleeingMove = 0.0f;
-        
+
         private NavMeshPath m_CurrentPath = null;       // The current path followed by the tank.
         private int m_CurrentCorner = 0;                // Which corner of the path the tank is currently going forward to 
         private bool m_IsMoving = false;                // Is the tank currently moving or not (the tank stop to shoot)
@@ -50,24 +50,24 @@ namespace Tanks.Complete
         {
             //Awake is still called on disabled component. So that the user can test disabling AI on a single tank
             //we ensure that the component wasn't disabled before initializing everything
-            if(!isActiveAndEnabled)
+            if (!isActiveAndEnabled)
                 return;
-            
+
             m_Movement = GetComponent<TankMovement>();
             m_Shooting = GetComponent<TankShooting>();
 
             // ensure that both movement and shooting script are set in "computer controlled" mode
             m_Movement.m_IsComputerControlled = true;
             m_Shooting.m_IsComputerControlled = true;
-            
+
             // to avoid all computer controlled tank pathfinding together (and taxing the CPU), AI tank have a random
             // pathfinding time that will stagger them across multiple frame
             m_PathfindTime = Random.Range(0.3f, 0.6f);
-            
+
             // Compute and store what is the maximum distance a shot from this tank can reach. This will be used when deciding when
             // to start charging and when to release a shot
             m_MaxShootingDistance = Vector3.Distance(m_Shooting.GetProjectilePosition(1.0f), transform.position);
-            
+
             // We use FindObjectByType to get all Tanks, to not depend on GameManager so user can try adding AI in an
             // empty scene where no GameManager was added yet.
             m_AllTanks = FindObjectsByType<TankMovement>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Select(e => e.gameObject).ToArray();
@@ -92,9 +92,9 @@ namespace Tanks.Complete
         void Update()
         {
             // If there is a cooldown active, we decrement it by the time elapsed since last frame
-            if(m_ShotCooldown > 0)
+            if (m_ShotCooldown > 0)
                 m_ShotCooldown -= Time.deltaTime;
-            
+
             // increment the time since last pathfind. The SeekUpdate will check if it goes over the pathfinding time
             // and if it need to trigger a new pathfinding
             m_PathfindTimer += Time.deltaTime;
@@ -122,14 +122,14 @@ namespace Tanks.Complete
 
                 // This will store each path toward each tank in the scene
                 NavMeshPath[] paths = new NavMeshPath[m_AllTanks.Length];
-                
+
                 // Initialize the shorted path length to the max value a float can have, so no matter what is the length
                 // of the first found path, it will for sure be shortest than this initial value
                 float shortestPath = float.MaxValue;
                 // which of the path in the paths array we use. By default none, which is represented by -1 here.
                 int usedPath = -1;
                 Transform target = null;
-                
+
                 // Calculate a path to every tank and check the closest
                 for (var i = 0; i < m_AllTanks.Length; i++)
                 {
@@ -138,9 +138,9 @@ namespace Tanks.Complete
                     //we don't want the tank to try to target itself, so ignore itself
                     if (tank == gameObject)
                         continue;
-                    
+
                     // this is a destroyed or deactivated tank, this is not a valid target
-                    if(tank == null || !tank.activeInHierarchy)
+                    if (tank == null || !tank.activeInHierarchy)
                         continue;
 
                     paths[i] = new NavMeshPath();
@@ -179,7 +179,7 @@ namespace Tanks.Complete
                     m_IsMoving = true;
                 }
 
-               
+
             }
             // The pathfinding is now either finished or wasn't triggered this frame as it was done recently enough
             // The SeekUpdate now seek and try to shot at the target it has
@@ -204,12 +204,12 @@ namespace Tanks.Complete
 
                 // the current position become the last position that will be used next frame to test if the target moved
                 m_LastTargetPosition = m_CurrentTarget.position;
-                
+
                 // Get a vector from this tank to its target
                 Vector3 toTarget = m_CurrentTarget.position - transform.position;
                 // by setting y to 0, we ensure that the vector to the target is in the flat plane of the ground
                 toTarget.y = 0;
-                
+
                 float targetDistance = toTarget.magnitude;
                 // normalize the vector to the target, setting its length to 1, which is useful for some mathematical operations.
                 toTarget.Normalize();
@@ -231,13 +231,13 @@ namespace Tanks.Complete
                 {
                     m_TimeCloseToTarget = 0.0f;
                 }
-                
+
                 // the dot product between 2 normalized vector is the cosine of the angle between those vector. This is useful as it
                 // allow to test how aligned those vector are : 1 -> in the same direction, 0 -> 90 deg angle, -1, pointing in opposite direction.
                 // As we compute the dot product between our forward vector and the vector toward our target, this give use how much we are
                 // facing our target : if this is close to 1, we are facing straight at our target.
                 float dotToTarget = Vector3.Dot(toTarget, transform.forward);
-                
+
                 //if we are charging, check if the current shot can reach the target
                 if (m_Shooting.IsCharging)
                 {
@@ -253,10 +253,10 @@ namespace Tanks.Complete
                     {
                         m_IsMoving = false;
                         m_Shooting.StopCharging();
-                        
+
                         // we just shot, so we set the cooldown to the time between shot (this is decremented each frame in the update function)
                         m_ShotCooldown = m_TimeBetweenShot;
-                        
+
                         // We just shot, and our target haven't moved for a while. Which mean they are probably also aiming and shooting at us
                         // we go into fleeing mode instead of staying there as a static target
                         if (m_TimeSinceLastTargetMove > 2.0f)
@@ -294,9 +294,9 @@ namespace Tanks.Complete
         {
             // When fleeing the tank will go toward a random point away from its target. When we reach the last corners
             // (i.e. point) of that path, we can go back to seek mode
-            if(m_CurrentCorner >= m_CurrentPath.corners.Length)
+            if (m_CurrentCorner >= m_CurrentPath.corners.Length)
                 m_CurrentState = State.Seek;
-            
+
             //check how far we moved since last update, if we don't move enough for a while, we're stuck somewhere, pick another point
             var distance = (transform.position - m_FleeingLastPosition).magnitude;
             m_FleeingLastPosition = transform.position;
@@ -321,10 +321,10 @@ namespace Tanks.Complete
             // To flee, we need to pick a point away from our current target
             m_FleeingLastPosition = transform.position;
             m_SinceLastFleeingMove = 0.0f;
-            
+
             // Start by getting the vector *toward* our target...
             var toTarget = (m_CurrentTarget.position - transform.position).normalized;
-            
+
             // then rotate that vector of a random angle between 90 and 180 degree, which will give us a random direction
             // in the opposite direction
             toTarget = Quaternion.AngleAxis(Random.Range(90.0f, 180.0f) * Mathf.Sign(Random.Range(-1.0f, 1.0f)),
@@ -350,11 +350,11 @@ namespace Tanks.Complete
         private void FixedUpdate()
         {
             // If the tank doesn't have a path currently, exit early.
-            if(m_CurrentPath == null || m_CurrentPath.corners.Length == 0)
+            if (m_CurrentPath == null || m_CurrentPath.corners.Length == 0)
                 return;
-            
+
             var rb = m_Movement.Rigidbody;
-            
+
             //The point we will orient toward. By default, the current corner in our path
             Vector3 orientTarget = m_CurrentPath.corners[Mathf.Min(m_CurrentCorner, m_CurrentPath.corners.Length - 1)];
 
@@ -381,8 +381,8 @@ namespace Tanks.Complete
             //the actual rotation for that frame is the smallest between the max turning speed for that time frame and the
             //angle itself. Multiplied by the sign of the angle to ensure we rotate in the right direction
             rotatingAngle = Mathf.Sign(rotatingAngle) * Mathf.Min(Mathf.Abs(rotatingAngle), m_Movement.m_TurnSpeed * Time.deltaTime);
-            
-            if(Mathf.Abs(rotatingAngle) > 0.000001f)
+
+            if (Mathf.Abs(rotatingAngle) > 0.000001f)
                 rb.MoveRotation(rb.rotation * Quaternion.AngleAxis(-rotatingAngle, Vector3.up));
 
             // If we reached our current target, we increase our corner. We will never reach the target when the target
@@ -399,7 +399,7 @@ namespace Tanks.Complete
             float dist = 0;
             for (var i = 1; i < path.corners.Length; ++i)
             {
-                dist += Vector3.Distance(path.corners[i-1], path.corners[i]);
+                dist += Vector3.Distance(path.corners[i - 1], path.corners[i]);
             }
 
             return dist;
